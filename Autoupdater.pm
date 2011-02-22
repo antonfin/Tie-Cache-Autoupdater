@@ -8,7 +8,7 @@ BEGIN {
     Time::HiRes->import('time') unless $@;
 }
 
-our $VERSION = 0.01;
+our $VERSION = 0.1;
 
 sub TIEHASH {
     my $class       = shift;
@@ -199,19 +199,20 @@ that you can set float timeout.
 In next example value for key C<db_counters> will be updated each 0.2 second, and 
 value for C<file_count> will be updated each 2.5 seconds.
 
-        tie %cache, 'Tie::Cache::Autoupdater', db_counters => {
+        tie %cache, 'Tie::Cache::Autoupdater',
+            db_counters => {
                 timeout => 0.2,
                 source  => sub { 
                     my $sth = $DBH->prepare('select count(*) from table2'); 
                     $sth->execute;
                     return ($sth->fetchrow_array);
-                },
-                file_count => {
-                    timeout => 2.5,
-                    source  => sub {
-                        my $file_count = glob( "$path/*" );
-                        return $file_count;
-                    }
+                }, 
+            },
+            file_count => {
+                timeout => 2.5,
+                source  => sub {
+                    my $file_count = glob( "$path/*" );
+                    return $file_count;
                 }
             };
 
@@ -228,6 +229,12 @@ reference.
 
 If system has C<Time::HiRes> package that C<Tie::Cache::Autoupdater> use 
 C<Time::HiRes::time> for timeout control.
+
+=head1 DEVELOPMENT
+
+=head2 Repository
+
+  http://github.com/antonfin/Tie-Cache-Autoupdater
 
 =head1 LICENSE AND COPYRIGHT
 
