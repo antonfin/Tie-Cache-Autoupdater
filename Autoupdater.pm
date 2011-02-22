@@ -3,6 +3,11 @@ package Tie::Cache::Autoupdater;
 use strict;
 use warnings;
 
+BEGIN {
+    eval { require Time::HiRes; };
+    Time::HiRes->import('time') unless $@;
+}
+
 our $VERSION = 0.01;
 
 sub TIEHASH {
@@ -64,7 +69,7 @@ sub DESTROY  { }
 sub _fetch {
     my ( $self, $k ) = @_;
     
-    if ( $self->{$k}{last} + $self->{$k}{timeout} < time ) {
+    if ( $self->{$k}{last} + $self->{$k}{timeout} < time() ) {
 
         my @result = eval { $self->{$k}{source}->() };
         if ( $@ ) { 
@@ -80,7 +85,7 @@ sub _fetch {
             $self->{$k}{result} = \@result;
         }
 
-        $self->{$k}{last} = time;
+        $self->{$k}{last} = time();
     }
     
     return $self->{$k}{result}
@@ -135,6 +140,12 @@ This documentation refers to <Tie::Cache::Autoupdater> version 0.1
         $data2 = $cache{key2};   # update data, call get_data_from_db
         $data3 = $cache{key3};   # update data, call get_data_from_file
 
+        # If you have Time::HiRes package, that you can use float timeout
+        $cache{key4} = {
+            source  => \&get_data_from_db2,
+            timeout => 0.5
+        };
+
 =head1 DESCRIPTION
 
 Sometimes I need show in web rarely changes data. You may save it in memory, 
@@ -149,9 +160,9 @@ You may created hash and tied it usages this package.
 
         tie my %cache, 'Tie::Cache::Autoupdater';
 
-And set it hash
+Or set it in hash
 
-        $cache{key1} = {
+        $cache{db_query} = {
             timeout => 10,
             source  => sub { 
                 my $sth = $DBH->prepare('select * from table'); 
@@ -160,12 +171,12 @@ And set it hash
             }
         };
 
-Package call anonymous subroutine when you want get value of C<%cache> with key 
-C<key1>.
+Package call anonymous subroutine when you want to get value from C<%cache> 
+with key C<db_query>.
         
 Or you may set cache parameters when you tied hash. Like this:
 
-        tie %cache, 'Tie::Cache::Autoupdater', key1 => {
+        tie %cache, 'Tie::Cache::Autoupdater', db_query => {
             timeout => 10,
             source  => sub { 
                 my $sth = $DBH->prepare('select * from table'); 
@@ -177,21 +188,46 @@ Or you may set cache parameters when you tied hash. Like this:
 
 =head2 Parameters
 
-You may set unlimited pairs key => value, where key is unique cache key. Value is
+You may set unlimited pairs key => value where key is unique cache key. Value is
 hash reference, where:
 
 =head3 timeout
 
-It's time for data saving
+It's time for data saving. Default 1 second. If you have C<Time::HiRes> module
+that you can set float timeout.
+
+In next example value for key C<db_counters> will be updated each 0.2 second, and 
+value for C<file_count> will be updated each 2.5 seconds.
+
+        tie %cache, 'Tie::Cache::Autoupdater', db_counters => {
+                timeout => 0.2,
+                source  => sub { 
+                    my $sth = $DBH->prepare('select count(*) from table2'); 
+                    $sth->execute;
+                    return ($sth->fetchrow_array);
+                },
+                file_count => {
+                    timeout => 2.5,
+                    source  => sub {
+                        my $file_count = glob( "$path/*" );
+                        return $file_count;
+                    }
+                }
+            };
 
 =head3 source
 
 Subroutine reference that return data for cache
 
-=head2 NOTE
+=head2 NOTE1
 
 If source subroutine return list, that package automatically convert it in array
 reference.
+
+=head2 NOTE2
+
+If system has C<Time::HiRes> package that C<Tie::Cache::Autoupdater> use 
+C<Time::HiRes::time> for timeout control.
 
 =head1 LICENSE AND COPYRIGHT
 
