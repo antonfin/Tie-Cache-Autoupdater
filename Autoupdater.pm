@@ -234,14 +234,14 @@ C<Time::HiRes::time> for timeout control.
 
 =head2 Repository
 
-  http://github.com/antonfin/Tie-Cache-Autoupdater
+http://github.com/antonfin/Tie-Cache-Autoupdater
 
 =head1 LICENSE AND COPYRIGHT
 
-    Copyright (c) 2011 (anton@antonfin.kiev.ua)
+Copyright (c) 2011 (anton@antonfin.kiev.ua)
 
-    This program is free software; you can redistribute it and/or modify it
-    under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =cut
 
