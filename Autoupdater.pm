@@ -160,7 +160,7 @@ You may created hash and tied it usages this package.
 
         tie my %cache, 'Tie::Cache::Autoupdater';
 
-Or set it in hash
+And set it in hash
 
         $cache{db_query} = {
             timeout => 10,
