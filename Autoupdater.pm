@@ -3,12 +3,14 @@ package Tie::Cache::Autoupdater;
 use strict;
 use warnings;
 
+use Storable 'dclone';
+
 BEGIN {
     eval { require Time::HiRes; };
     Time::HiRes->import('time') unless $@;
 }
 
-our $VERSION = 0.1;
+our $VERSION = 0.2;
 
 sub TIEHASH {
     my $class       = shift;
@@ -21,6 +23,7 @@ sub TIEHASH {
             source  => $v->{source},
             last    => 0,
             result  => undef,
+            clone   => $v->{clone} ? 1 : 0
         }
     }
 
@@ -29,12 +32,8 @@ sub TIEHASH {
 
 sub FETCH { 
     my ( $self, $k ) = @_;
-    
-    unless ( exists $self->{ $k } ) {
-        warn "Key $k doesn't exist\n";
-        return undef
-    }
 
+    return undef unless exists $self->{ $k };
     _fetch( $_[0], $k )
 }
 
@@ -45,6 +44,7 @@ sub STORE {
         source  => $v->{source},
         last    => 0,
         result  => undef,
+        clone   => $v->{clone} ? 1 : 0
     }
 }
 
@@ -88,7 +88,9 @@ sub _fetch {
         $self->{$k}{last} = time();
     }
     
-    return $self->{$k}{result}
+    return $self->{$k}{clone}
+        ? dclone($self->{$k}{result})
+        : $self->{$k}{result};
 }
 
 1;
@@ -101,11 +103,11 @@ Tie::Cache::Autoupdater - cache that automatically updated
 
 =head1 VERSION
 
-This documentation refers to <Tie::Cache::Autoupdater> version 0.1
+This documentation refers to <Tie::Cache::Autoupdater> version 0.2
 
 =head1 AUTHOR
 
-<Anton Morozov>  (<anton@antonfin.kiev.ua>)
+<Anton Morozov>  (<antonfin@cpan.org>)
 
 =head1 SYNOPSIS
 
@@ -144,6 +146,14 @@ This documentation refers to <Tie::Cache::Autoupdater> version 0.1
         $cache{key4} = {
             source  => \&get_data_from_db2,
             timeout => 0.5
+        };
+
+        # If you plane to change the returned data you may cloned there.
+        # Set true to a flag "clone".
+        $cache{key4} = {
+            source  => \&get_data_from_db3,
+            timeout => 1,
+            clone   => 1
         };
 
 =head1 DESCRIPTION
@@ -206,7 +216,7 @@ value for C<file_count> will be updated each 2.5 seconds.
                     my $sth = $DBH->prepare('select count(*) from table2'); 
                     $sth->execute;
                     return ($sth->fetchrow_array);
-                }, 
+                }
             },
             file_count => {
                 timeout => 2.5,
@@ -220,6 +230,10 @@ value for C<file_count> will be updated each 2.5 seconds.
 
 Subroutine reference that return data for cache
 
+=head3 clone
+
+A flag that determines to clone or not clone the returned reference
+
 =head2 NOTE1
 
 If source subroutine return list, that package automatically convert it in array
@@ -230,6 +244,10 @@ reference.
 If system has C<Time::HiRes> package that C<Tie::Cache::Autoupdater> use 
 C<Time::HiRes::time> for timeout control.
 
+=head2 NOTE3
+
+For cloned references used C<dclone> subroutine from C<Storage> package
+
 =head1 DEVELOPMENT
 
 =head2 Repository
@@ -238,7 +256,7 @@ http://github.com/antonfin/Tie-Cache-Autoupdater
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2011 (anton@antonfin.kiev.ua)
+Copyright (c) 2011 (antonfin@cpan.org)
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -3,7 +3,7 @@
 #
 #  DESCRIPTION:  test base package possibility
 #
-#       AUTHOR:  Anton Morozov (anton@antonfin.kiev.ua)
+#       AUTHOR:  Anton Morozov (antonfin@cpan.org)
 #      CREATED:  18.02.2011 14:48:05
 #===============================================================================
 

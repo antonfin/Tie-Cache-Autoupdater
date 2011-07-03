@@ -1,4 +1,6 @@
 Revision history for Tie::Cache::Autoupdater
 
-0.01
+0.1
         First version, released on an unsuspecting world.
+0.2
+        Added new attribute - "clone". Delete unnecessary warn message when key doesn't exist
