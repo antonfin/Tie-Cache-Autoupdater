@@ -1,0 +1,31 @@
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    name: perl ${{ matrix.perl }}
+    runs-on: ubuntu-latest
+    container: perl:${{ matrix.perl }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        perl: ['5.26', '5.32', '5.36', '5.38', '5.40', '5.42']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show the perl under test
+        run: perl -v | sed -n 2p
+
+      - name: Build
+        run: |
+          perl Makefile.PL
+          make
+
+      - name: Test
+        run: make test
