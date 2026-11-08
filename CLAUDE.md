@@ -77,6 +77,9 @@ docker run --rm -v "$PWD":/src:ro -w /work perl:5.42 bash -c \
   'cp -r /src/. /work/ && perl Makefile.PL >/dev/null && make >/dev/null && make test'
 ```
 
+`.github/workflows/test.yml` runs that same matrix on every push to `master` and every pull request,
+using the official `perl:*` containers. Coverage is not part of CI — measure it locally as above.
+
 ## Architecture
 
 `$self` is the tied hash and doubles as the per-key config/state store: each key maps to
