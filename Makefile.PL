@@ -5,7 +5,7 @@ WriteMakefile(
     NAME	    => 'Tie::Cache::Autoupdater',
     VERSION_FROM=> 'Autoupdater.pm',
     AUTHOR      => 'Anton Morozov <antonfin@cpan.org>',
-    ABSTRACT    => 'Cache that automatically updated',
+    ABSTRACT_FROM=> 'Autoupdater.pm',
     LICENSE     => 'artistic_2',
     PREREQ_PM   => { Storable => 0 },
     test        => { TESTS => 't/*.t' },

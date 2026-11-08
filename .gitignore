@@ -1,0 +1,21 @@
+# ExtUtils::MakeMaker build artifacts
+/Makefile
+/Makefile.old
+/blib/
+/pm_to_blib
+/MYMETA.json
+/MYMETA.yml
+/META.json
+/META.yml
+/MANIFEST.bak
+
+# "make dist" output
+/Tie-Cache-Autoupdater-*/
+/Tie-Cache-Autoupdater-*.tar.gz
+
+# Devel::Cover
+/cover_db/
+
+# Coding assistant - machine-local configuration only; CLAUDE.md is tracked
+/.claude/settings.local.json
+/CLAUDE.local.md
