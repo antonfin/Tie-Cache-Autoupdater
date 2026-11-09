@@ -19,3 +19,9 @@ Revision history for Tie::Cache::Autoupdater
 
         Test suite extended to cover the whole module (statements, branches,
         conditions and subroutines). Verified on perl 5.26 - 5.42.
+
+        Added a LICENSE file with the full license text and fixed the license
+        declared in Makefile.PL: it said Artistic 2.0, while the documentation
+        has always said "the same terms as Perl itself" (Artistic 1.0 or GPL).
+
+        Removed the empty TODO file from the distribution.

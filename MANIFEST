@@ -1,5 +1,6 @@
 Autoupdater.pm
 Changes
+LICENSE
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
@@ -17,4 +18,3 @@ t/10_errors.t
 t/11_returns.t
 t/12_defaults.t
 t/13_no_time_hires.t
-TODO

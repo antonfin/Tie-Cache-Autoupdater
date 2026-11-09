@@ -44,7 +44,8 @@ make install
 
 COPYRIGHT
 ---------
-Copyright 2011 by Anton Morozov (antonfin)
+Copyright 2011-2026 by Anton Morozov (antonfin)
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
+See the LICENSE file for the full text.
