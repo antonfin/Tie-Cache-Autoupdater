@@ -77,8 +77,16 @@ docker run --rm -v "$PWD":/src:ro -w /work perl:5.42 bash -c \
   'cp -r /src/. /work/ && perl Makefile.PL >/dev/null && make >/dev/null && make test'
 ```
 
-`.github/workflows/test.yml` runs that same matrix on every push to `master` and every pull request,
-using the official `perl:*` containers. Coverage is not part of CI — measure it locally as above.
+The official `perl:*` images below 5.26 can no longer be pulled (old manifest format); use
+`perldocker/perl-tester:<5.8..5.24>` instead (amd64 only, `--platform linux/amd64`; its `5.8`
+is 5.8.9, its `5.10` is 5.10.1).
+
+`.github/workflows/test.yml` runs perl 5.8.9 through 5.42 on every push to `master` and every pull
+request: official `perl:*` containers for 5.26+, `perldocker/perl-tester` for 5.8–5.24.
+
+The supported minimum is **perl 5.8** — declared as `MIN_PERL_VERSION` in `Makefile.PL`, in the
+POD `DEPENDENCIES` section and in `README`; keep all three (and the CI matrix) in sync, and don't
+use anything newer than 5.8 — e.g. `//`, `say`, `state` and `given`/`when` all need 5.10. Coverage is not part of CI — measure it locally as above.
 
 ## Architecture
 
@@ -87,18 +95,27 @@ using the official `perl:*` containers. Coverage is not part of CI — measure i
 tied hash registers a cache entry rather than storing a value.
 
 - `STORE` and `TIEHASH` share the same entry-construction logic (duplicated in both); `$cache{k} = {...}`
-  and `tie %cache, ..., k => {...}` are interchangeable. A store always resets `last`/`result`,
-  so re-registering a key invalidates it.
-- `_fetch` is the single read path: if `last + timeout < time()`, it calls `source` under `eval`
-  (on error it `warn`s and returns `undef` without updating `last`, so the next read retries),
-  normalizes the return (empty list → `undef`, one value → scalar, list → arrayref), and stamps `last`.
+  and `tie %cache, ..., k => {...}` are interchangeable. A store always resets `last` to `undef`
+  and `result`, so re-registering a key invalidates it.
+- `_fetch` is the single read path: if `last` is `undef` or `last + timeout < _now()`, it calls
+  `source` under `eval` (on error it `warn`s and returns `undef` without updating `last`, so the next
+  read retries), normalizes the return (empty list → `undef`, one value → scalar, list → arrayref),
+  and stamps `last`.
+- Failure is detected by `eval { ...; 1 }`'s return value, **never by `$@`**: before 5.14 a
+  destructor running `eval` during unwinding clears `$@`, and an exception object can be false.
+  An empty error is reported as `unknown error`. `t/10_errors.t` covers both cases.
 - `clone` is applied on the way *out*: `dclone` from `Storable` is returned only when the cached
   result is a reference. Without `clone`, callers receive the cached reference itself and mutating it
   corrupts the cache — `t/07_storable.t` and `t/08_storable.t` assert both halves of this contract.
-- `Time::HiRes` is optional, imported in `BEGIN` to override `time`. When present, fractional
-  timeouts work; otherwise timeouts are whole seconds. Anything touching timing must keep working
-  under both — `t/06_time_hires.t` covers the first case and `t/13_no_time_hires.t` the second, by
-  installing an `@INC` hook that makes `require Time::HiRes` fail.
+- All timing goes through `_now()`, chosen once in `BEGIN`: `Time::HiRes::clock_gettime(
+  CLOCK_MONOTONIC)` if it works (so system clock changes can't freeze or prematurely expire
+  values), else `Time::HiRes::time` (fractional seconds), else built-in `time` (whole seconds). The
+  monotonic clock starts at an arbitrary point (often seconds after boot in a container), so "never
+  loaded" must be `last => undef`, never `0`. Each fallback has a test: `t/14_monotonic.t`
+  (wall clock moved back/forward), `t/15_no_monotonic.t` (`clock_gettime` returns -1),
+  `t/13_no_time_hires.t` (an `@INC` hook makes `require Time::HiRes` fail).
+- The tests' `use lib 'blib/lib'` takes precedence over `-I`, so a stale `blib/` silently tests the
+  old module; rebuild (`make`) before trusting a local run.
 - `FETCH` returns `undef` for unregistered keys silently (the warning was removed in 0.20 — see
   `Changes`); don't reintroduce it.
 - A false `timeout` (`0`, `undef`, missing) becomes the default of 1 second — `|| 1`, not `// 1`,
