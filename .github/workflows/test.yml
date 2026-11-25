@@ -9,12 +9,25 @@ jobs:
   test:
     name: perl ${{ matrix.perl }}
     runs-on: ubuntu-latest
-    container: perl:${{ matrix.perl }}
+    container: ${{ matrix.image || format('perl:{0}', matrix.perl) }}
 
     strategy:
       fail-fast: false
       matrix:
         perl: ['5.26', '5.32', '5.36', '5.38', '5.40', '5.42']
+        # The official perl:* images below 5.26 use a manifest format Docker
+        # no longer pulls, so older perls come from perldocker/perl-tester.
+        # 5.8 is 5.8.9, the oldest perl the distribution supports.
+        include:
+          - { perl: '5.8',  image: 'perldocker/perl-tester:5.8' }
+          - { perl: '5.10', image: 'perldocker/perl-tester:5.10' }
+          - { perl: '5.12', image: 'perldocker/perl-tester:5.12' }
+          - { perl: '5.14', image: 'perldocker/perl-tester:5.14' }
+          - { perl: '5.16', image: 'perldocker/perl-tester:5.16' }
+          - { perl: '5.18', image: 'perldocker/perl-tester:5.18' }
+          - { perl: '5.20', image: 'perldocker/perl-tester:5.20' }
+          - { perl: '5.22', image: 'perldocker/perl-tester:5.22' }
+          - { perl: '5.24', image: 'perldocker/perl-tester:5.24' }
 
     steps:
       - uses: actions/checkout@v4
